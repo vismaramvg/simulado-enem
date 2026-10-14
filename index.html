@@ -70,6 +70,29 @@
                 <option value="2015">ENEM 2015</option>
             </select>
         </div>
+        <div class="form-group">
+            <label for="select-tema">Selecione o Tema:</label>
+            <select id="select-tema">
+                <option value="todos">Todos os Temas</option>
+                <option value="Análise Combinatória">Análise Combinatória</option>
+                <option value="Aritmética">Aritmética</option>
+                <option value="Estatística">Estatística</option>
+                <option value="Equações">Equações</option>
+                <option value="Inequações">Inequações</option>
+                <option value="Funções">Funções</option>
+                <option value="Geometria Analítica">Geometria Analítica</option>
+                <option value="Geometria Espacial">Geometria Espacial</option>
+                <option value="Geometria Plana">Geometria Plana</option>
+                <option value="Logaritmos">Logaritmos</option>
+                <option value="Matemática Financeira">Matemática Financeira</option>
+                <option value="Mediana">Mediana</option>
+                <option value="Probabilidade">Probabilidade</option>
+                <option value="Sequências">Progressões / Sequências</option>
+                <option value="Razões">Razões e Proporções</option>
+                <option value="Trigonometria">Trigonometria</option>
+                <option value="Medidas">Unidade de Medidas / Grandezas</option>
+            </select>
+        </div>
         <button id="btn-start" class="btn-nav" style="width: 100%;">Iniciar Simulado</button>
         
     </div>
@@ -77,7 +100,7 @@
     <!-- CABEÇALHO DO SIMULADO -->
     <header id="quiz-header" class="hide">
         <button id="btn-voltar-home" class="btn-home">Menu Início</button>
-        <div id="progress">Questão <span id="current-index">1</span> de 10</div>
+        <div id="progress">Questão <span id="current-index">1</span> de <span id="total-questions">10</span></div>
         <div id="timer">50:00</div>
     </header>
 
@@ -109,7 +132,7 @@
     <div id="screen-results" class="quiz-container hide">
         <h2>Simulado Concluído!</h2>
         <p style="margin-top: 10px; color: #64748b;">Entregue sua folha de rascunhos com os cálculos para o professor.</p>
-        <div class="score"><span id="correct-count">0</span> / 10</div>
+        <div class="score"><span id="correct-count">0</span> / <span id="total-score">10</span></div>
         <p id="feedback-text">Você acertou X% da prova.</p>
         
         <!-- Container de Revisão -->
@@ -128,15 +151,12 @@
         let questoesSorteadas = [];
         let indiceAtual = 0;
         let respostasAluno = {}; 
-        let tempoRestante = 50 * 60; 
+        let tempoRestante = 0; 
         let intervaloCronometro;
 
-        // Tempo por questão (guardado em MILISSEGUNDOS)
         let temposQuestao = {};
         let tempoInicioQuestao = 0;
 
-        // Soma ao índice ATUAL o tempo decorrido desde o último marcador.
-        // Deve ser chamada SEMPRE ANTES de mudar o indiceAtual.
         function registrarTempoQuestao() {
             if (tempoInicioQuestao > 0) {
                 const gasto = Date.now() - tempoInicioQuestao;
@@ -145,22 +165,36 @@
             }
         }
 
-        function gerarSimulado(anoEscolhido) {
+        function gerarSimulado(anoEscolhido, temaEscolhido) {
             let base = bancoQuestoes;
+
+            // 1. Filtra por ano, se não for "todos"
             if (anoEscolhido !== "todos") {
-                base = bancoQuestoes.filter(q => q.ano == anoEscolhido);
+                base = base.filter(q => q.ano == anoEscolhido);
             }
 
-            const faceis = base.filter(q => q.dificuldade === "facil").sort(() => 0.5 - Math.random()).slice(0, 3);
-            const medias = base.filter(q => q.dificuldade === "media").sort(() => 0.5 - Math.random()).slice(0, 5);
-            const dificeis = base.filter(q => q.dificuldade === "dificil").sort(() => 0.5 - Math.random()).slice(0, 2);
-            
-            questoesSorteadas = [...faceis, ...medias, ...dificeis].sort(() => 0.5 - Math.random());
+            // 2. Filtra por tema, se não for "todos"
+            if (temaEscolhido !== "todos") {
+                base = base.filter(q => 
+                    q.tema && q.tema.toLowerCase().includes(temaEscolhido.toLowerCase())
+                );
+
+                // Se escolheu um tema específico, pega aleatoriamente todas ou até 10 questões disponíveis desse tema
+                questoesSorteadas = base.sort(() => 0.5 - Math.random()).slice(0, 10);
+            } else {
+                // Se for "todos os temas", mantém a proporção original (3 fáceis, 5 médias, 2 difíceis = 10 questões)
+                const faceis = base.filter(q => q.dificuldade === "facil").sort(() => 0.5 - Math.random()).slice(0, 3);
+                const medias = base.filter(q => q.dificuldade === "media").sort(() => 0.5 - Math.random()).slice(0, 5);
+                const dificeis = base.filter(q => q.dificuldade === "dificil").sort(() => 0.5 - Math.random()).slice(0, 2);
+                
+                questoesSorteadas = [...faceis, ...medias, ...dificeis].sort(() => 0.5 - Math.random());
+            }
         }
 
         function renderizarQuestao() {
             const q = questoesSorteadas[indiceAtual];
             document.getElementById("current-index").innerText = indiceAtual + 1;
+            document.getElementById("total-questions").innerText = questoesSorteadas.length;
             document.getElementById("quest-info").innerText = `ENEM ${q.ano} - ${q.tema || 'Geral'} (Q.${q.id})`;
             document.getElementById("question-image").src = `questoes/${q.ano}/${q.id}.png`;
 
@@ -178,12 +212,12 @@
                 document.getElementById("btn-next").innerText = "Próxima";
             }
 
-            // Marca o início da contagem para a questão que acabou de ser exibida
             tempoInicioQuestao = Date.now();
         }
 
         function iniciarCronometro() {
-            tempoRestante = 50 * 60; 
+            // Tempo proporcional: 5 minutos por questão (em segundos)
+            tempoRestante = questoesSorteadas.length * 5 * 60; 
             clearInterval(intervaloCronometro);
             
             intervaloCronometro = setInterval(() => {
@@ -204,7 +238,6 @@
         function finalizarSimulado() {
             clearInterval(intervaloCronometro);
 
-            // Contabiliza o tempo da última questão aberta
             registrarTempoQuestao();
             tempoInicioQuestao = 0;
 
@@ -214,6 +247,7 @@
 
             let acertos = 0;
             let reviewListHTML = "";
+            const totalQ = questoesSorteadas.length;
 
             questoesSorteadas.forEach((q, index) => {
                 const respostaDoAluno = respostasAluno[index] || "Não respondida";
@@ -224,12 +258,10 @@
                 }
 
                 const corBorda = acertou ? "#22c55e" : "#dc2626";
-                
                 const statusTexto = acertou 
                     ? `✅ Acertou! (Sua resposta: ${respostaDoAluno} | Gabarito: ${q.gabarito})` 
                     : `❌ Errou (Sua resposta: ${respostaDoAluno} | Gabarito: ${q.gabarito})`;
                 
-                // Formatação do tempo gasto (converte de ms para segundos)
                 const segundosTotais = Math.round((temposQuestao[index] || 0) / 1000);
                 const min = Math.floor(segundosTotais / 60);
                 const seg = segundosTotais % 60;
@@ -256,14 +288,16 @@
                 `;
             });
 
+            const percentualAcerto = Math.round((acertos / totalQ) * 100);
+
             document.getElementById("correct-count").innerText = acertos;
-            document.getElementById("feedback-text").innerText = `Você acertou ${acertos * 10}% da prova de forma preliminar.`;
+            document.getElementById("total-score").innerText = totalQ;
+            document.getElementById("feedback-text").innerText = `Você acertou ${percentualAcerto}% da prova de forma preliminar.`;
             
             document.getElementById("review-list").innerHTML = reviewListHTML;
             document.getElementById("screen-results").classList.remove("hide");
         }
 
-        // Função para mostrar/esconder a imagem na revisão
         function alternarImagem(idElemento, botao) {
             const containerImg = document.getElementById(idElemento);
             if (containerImg.style.display === "none") {
@@ -291,17 +325,17 @@
             document.getElementById("screen-config").classList.remove("hide");
         }
 
-        // EVENTOS DE BOTÃO
         document.getElementById("btn-start").addEventListener("click", () => {
             const anoSelecionado = document.getElementById("select-ano").value;
-            gerarSimulado(anoSelecionado);
+            const temaSelecionado = document.getElementById("select-tema").value;
+    
+            gerarSimulado(anoSelecionado, temaSelecionado);
 
-            if(questoesSorteadas.length < 10) {
-                alert("Não há questões suficientes cadastradas para este filtro.");
+            if(questoesSorteadas.length === 0) {
+                alert("Não há questões cadastradas para esta combinação de ano e tema.");
                 return;
             }
 
-            // Zera tudo para um simulado novo
             respostasAluno = {};
             temposQuestao = {};
             indiceAtual = 0;
@@ -333,7 +367,7 @@
 
         document.getElementById("btn-next").addEventListener("click", () => {
             if (indiceAtual < questoesSorteadas.length - 1) {
-                registrarTempoQuestao();   // antes de mudar o índice
+                registrarTempoQuestao();   
                 indiceAtual++;
                 renderizarQuestao();
             } else {
@@ -345,7 +379,7 @@
 
         document.getElementById("btn-prev").addEventListener("click", () => {
             if (indiceAtual > 0) {
-                registrarTempoQuestao();   // antes de mudar o índice
+                registrarTempoQuestao();   
                 indiceAtual--;
                 renderizarQuestao();
             }
