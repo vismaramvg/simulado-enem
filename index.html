@@ -12,7 +12,7 @@
             --text: #1e293b;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: var(--bg); color: var(--text); padding: 15px; display: flex; flex-direction: column; align-items: center; }
+        body { background-color: var(--bg); color: var(--text); padding: 15px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
         
         /* TELA DE CONFIGURAÇÃO / MENU INICIAL */
         .config-container { width: 100%; max-width: 600px; background: var(--card); border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-top: 20px; text-align: center; }
@@ -20,8 +20,13 @@
         .config-container h2 { font-size: 1.1rem; margin-bottom: 15px; color: #078b07; }
         .form-group { margin-bottom: 20px; text-align: left; }
         .form-group label { display: block; font-weight: bold; margin-bottom: 8px; color: #475569; }
-        .form-group select { width: 100%; padding: 12px; border-radius: 8px; border: 2px solid #e2e8f0; font-size: 1rem; background: #f8fafc; }
-        
+        .form-group select, .form-group input, .form-group textarea { width: 100%; padding: 12px; border-radius: 8px; border: 2px solid #e2e8f0; font-size: 1rem; background: #f8fafc; }
+        .form-group textarea { resize: vertical; height: 100px; }
+
+        .menu-botoes-extras { display: flex; gap: 10px; margin-top: 15px; }
+        .btn-secundario { flex: 1; background: #e2e8f0; color: #334155; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 0.9rem; transition: background 0.2s; }
+        .btn-secundario:hover { background: #cbd5e1; }
+
         header { width: 100%; max-width: 600px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: var(--card); padding: 15px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 10; }
         #timer { font-size: 1.2rem; font-weight: bold; color: #dc2626; }
         #progress { font-weight: 600; }
@@ -38,18 +43,19 @@
         .btn-nav { background: var(--primary); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 1rem; }
         .btn-nav:disabled { background: #cbd5e1; cursor: not-allowed; }
         
-        /* Estilo para o botão de voltar ao menu */
         .btn-home { background: #64748b; color: white; border: none; padding: 8px 14px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 0.9rem; }
         .btn-home:hover { background: #475569; }
 
         #screen-results { text-align: center; padding: 20px; }
         .score { font-size: 3rem; font-weight: bold; color: var(--primary); margin: 20px 0; }
+
+        .autor-assinatura { margin-top: 15px; font-size: 0.85rem; color: #64748b; text-align: center; }
         .hide { display: none !important; }
     </style>
 </head>
 <body>
 
-    <!-- TELA DE CONFIGURAÇÃO DO SIMULADO -->
+    <!-- TELA DE CONFIGURAÇÃO / MENU INICIAL -->
     <div id="screen-config" class="config-container">
         <h1>Simulado de Matemática ENEM</h1>
         <h2>Configurar Simulado</h2>
@@ -94,6 +100,29 @@
         </div>
         <button id="btn-start" class="btn-nav" style="width: 100%;">Iniciar Simulado</button>
         
+        <div class="menu-botoes-extras">
+            <button class="btn-secundario" onclick="abrirTelaFeedback()" style="width: 100%;">📝 Reportar Erro / Feedback</button>
+        </div>
+    </div>
+
+    <!-- TELA DE FEEDBACK / REPORTAR ERRO -->
+    <div id="screen-feedback" class="config-container hide">
+        <h1>Reportar Erro ou Enviar Feedback</h1>
+        <p style="color: #64748b; font-size: 0.9rem; margin-bottom: 20px;">Encontrou algum erro na questão, no gabarito ou sugestão de melhoria? Informe abaixo:</p>
+        
+        <div class="form-group">
+            <label for="fb-questao">Identificação da Questão (Ano / Número):</label>
+            <input type="text" id="fb-questao" placeholder="Ex: ENEM 2023 - Q.142 ou Erro geral no site">
+        </div>
+        <div class="form-group">
+            <label for="fb-mensagem">Descreva o erro ou sugestão:</label>
+            <textarea id="fb-mensagem" placeholder="Explique detalhadamente o erro encontrado..."></textarea>
+        </div>
+        
+        <div style="display: flex; gap: 10px;">
+            <button class="btn-secundario" onclick="voltarAoMenu()">Voltar</button>
+            <button id="btn-enviar-fb" class="btn-nav" style="flex: 1;" onclick="enviarFeedback()">Enviar Feedback</button>
+        </div>
     </div>
 
     <!-- CABEÇALHO DO SIMULADO -->
@@ -104,7 +133,7 @@
     </header>
 
     <div class="autor-assinatura">
-    <p>Desenvolvido por Vismara M.V.G.</p>
+        <p>Desenvolvido por Vismara M.V.G.</p>
     </div>
 
     <!-- TELA DA QUESTÃO -->
@@ -134,7 +163,6 @@
         <div class="score"><span id="correct-count">0</span> / <span id="total-score">10</span></div>
         <p id="feedback-text">Você acertou X% da prova.</p>
         
-        <!-- Container de Revisão -->
         <div id="review-container" style="text-align: left; margin-top: 25px; border-top: 2px solid #e2e8f0; padding-top: 20px;">
             <h3 style="margin-bottom: 15px; color: var(--primary);">Revisão das Questões</h3>
             <div id="review-list" style="display: flex; flex-direction: column; gap: 15px;"></div>
@@ -167,21 +195,16 @@
         function gerarSimulado(anoEscolhido, temaEscolhido) {
             let base = bancoQuestoes;
 
-            // 1. Filtra por ano, se não for "todos"
             if (anoEscolhido !== "todos") {
                 base = base.filter(q => q.ano == anoEscolhido);
             }
 
-            // 2. Filtra por tema, se não for "todos"
             if (temaEscolhido !== "todos") {
                 base = base.filter(q => 
                     q.tema && q.tema.toLowerCase().includes(temaEscolhido.toLowerCase())
                 );
-
-                // Se escolheu um tema específico, pega aleatoriamente todas ou até 10 questões disponíveis desse tema
                 questoesSorteadas = base.sort(() => 0.5 - Math.random()).slice(0, 10);
             } else {
-                // Se for "todos os temas", mantém a proporção original (3 fáceis, 5 médias, 2 difíceis = 10 questões)
                 const faceis = base.filter(q => q.dificuldade === "facil").sort(() => 0.5 - Math.random()).slice(0, 3);
                 const medias = base.filter(q => q.dificuldade === "media").sort(() => 0.5 - Math.random()).slice(0, 5);
                 const dificeis = base.filter(q => q.dificuldade === "dificil").sort(() => 0.5 - Math.random()).slice(0, 2);
@@ -215,7 +238,6 @@
         }
 
         function iniciarCronometro() {
-            // Tempo proporcional: 5 minutos por questão (em segundos)
             tempoRestante = questoesSorteadas.length * 5 * 60; 
             clearInterval(intervaloCronometro);
             
@@ -236,7 +258,6 @@
 
         function finalizarSimulado() {
             clearInterval(intervaloCronometro);
-
             registrarTempoQuestao();
             tempoInicioQuestao = 0;
 
@@ -252,9 +273,7 @@
                 const respostaDoAluno = respostasAluno[index] || "Não respondida";
                 const acertou = respostaDoAluno === q.gabarito;
                 
-                if (acertou) {
-                    acertos++;
-                }
+                if (acertou) acertos++;
 
                 const corBorda = acertou ? "#22c55e" : "#dc2626";
                 const statusTexto = acertou 
@@ -292,7 +311,6 @@
             document.getElementById("correct-count").innerText = acertos;
             document.getElementById("total-score").innerText = totalQ;
             document.getElementById("feedback-text").innerText = `Você acertou ${percentualAcerto}% da prova de forma preliminar.`;
-            
             document.getElementById("review-list").innerHTML = reviewListHTML;
             document.getElementById("screen-results").classList.remove("hide");
         }
@@ -310,6 +328,13 @@
             }
         }
 
+        // Navegação para a tela de feedback
+        function abrirTelaFeedback() {
+            document.getElementById("screen-config").classList.add("hide");
+            document.getElementById("screen-feedback").classList.remove("hide");
+        }
+
+        // Retorna sempre para o menu inicial escondendo as outras telas com segurança
         function voltarAoMenu() {
             clearInterval(intervaloCronometro);
             respostasAluno = {};
@@ -321,7 +346,51 @@
             document.getElementById("quiz-screen").classList.add("hide");
             document.getElementById("quiz-footer").classList.add("hide");
             document.getElementById("screen-results").classList.add("hide");
+            document.getElementById("screen-feedback").classList.add("hide");
             document.getElementById("screen-config").classList.remove("hide");
+        }
+
+        // Envio do feedback integrado com o Formspree
+        async function enviarFeedback() {
+            const questao = document.getElementById("fb-questao").value.trim();
+            const mensagem = document.getElementById("fb-mensagem").value.trim();
+
+            if (!mensagem) {
+                alert("Por favor, descreva o erro ou sugestão antes de enviar.");
+                return;
+            }
+
+            const btnEnviar = document.getElementById("btn-enviar-fb");
+            btnEnviar.disabled = true;
+            btnEnviar.innerText = "Enviando...";
+
+            try {
+                const response = await fetch("https://formspree.io/f/myekajkk", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
+                    body: JSON.stringify({
+                        questao: questao || "Não especificada",
+                        mensagem: mensagem
+                    })
+                });
+
+                if (response.ok) {
+                    alert("Obrigado! Seu feedback foi enviado com sucesso.");
+                    document.getElementById("fb-questao").value = "";
+                    document.getElementById("fb-mensagem").value = "";
+                    voltarAoMenu();
+                } else {
+                    alert("Houve um erro ao enviar. Tente novamente mais tarde.");
+                }
+            } catch (error) {
+                alert("Erro de conexão ao enviar feedback.");
+            } finally {
+                btnEnviar.disabled = false;
+                btnEnviar.innerText = "Enviar Feedback";
+            }
         }
 
         document.getElementById("btn-start").addEventListener("click", () => {
